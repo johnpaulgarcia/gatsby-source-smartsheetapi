@@ -7,15 +7,8 @@ const get = endpoint => axios.get(`https://api.smartsheet.com/2.0/${endpoint}`, 
     }
 });
 
-const getSheetData = sheets => 
-    Promise.all(
-        sheets.map(async id => {
-            const { data: sheet } = await get(`sheets/${id}`)
-            return sheet
-        })
-    )
-
-exports.sourceNodes = async ({ actions }) => {
+exports.sourceNodes = async ({ actions }, configOptions) => {
+    const { sheetId } = configOptions
     const { createNode } = actions
     const { createNodeFactory } = createNodeHelpers({
         typePrefix: 'Smartsheet'
@@ -23,12 +16,7 @@ exports.sourceNodes = async ({ actions }) => {
 
     const prepareSheets = createNodeFactory("Sheets");
 
-    const allSheets = await getSheetData(['3940651537590148'])
-
-    const processSheet = sheet => {
-        return prepareSheets(sheet)
-    }
-
-    allSheets.forEach( sheet => createNode(processSheet(sheet)));
+    const { data: allSheets } = await get(`sheets/${sheetId}`)
+    createNode(prepareSheets(allSheets))
 }
 
